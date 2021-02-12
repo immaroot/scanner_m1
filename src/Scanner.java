@@ -10,8 +10,9 @@ public class Scanner implements IScanner {
 
     private int start = 0;
     private int current = 0;
-    private final int line = 1;
-    private final int column = 0;
+    private int line = 1;
+    private int column = 1;
+    Position position;
 
     private static final Map<String, Token.TokenType> KEYWORDS = new HashMap<>();
     private static final Map<String, Token.TokenType> SYMBOLS = new HashMap<>();
@@ -60,6 +61,8 @@ public class Scanner implements IScanner {
         SYMBOLS.put(">", Token.TokenType.GTR);
         SYMBOLS.put(">=", Token.TokenType.GEQ);
         SYMBOLS.put("?", Token.TokenType.QUERY);
+        SYMBOLS.put("~", Token.TokenType.NOT);
+        SYMBOLS.put("$", Token.TokenType.HEX);
     }
 
     Scanner(String source) {
@@ -70,14 +73,16 @@ public class Scanner implements IScanner {
     public List<IToken> scanTokens() {
         while (!isAtEnd()) {
             start = current;
+            position = new Position(line, column);
             scanToken();
         }
-        tokens.add(new Token(Token.TokenType.EOF,"", null, new Position(line, column)));
+        tokens.add(new Token(Token.TokenType.EOF, "", null, position));
         return tokens;
     }
 
     private void scanToken() {
         char c = advance();
+        position = new Position(line, column - 1);
 
         if (isSymbol(c)) {
             scanSymbol();
@@ -100,10 +105,24 @@ public class Scanner implements IScanner {
     private void scanSymbol() {
        char c = source.charAt(start);
         switch (c) {
+            case '$' -> scanHexadecimal();
             case '<' -> addToken(match('=') ? Token.TokenType.LEQ : Token.TokenType.LSS);
             case '>' -> addToken(match('=') ? Token.TokenType.GEQ : Token.TokenType.GTR);
             case ':' -> addToken(match('=') ? Token.TokenType.BECOMES : Token.TokenType.COLON);
             default -> addToken(SYMBOLS.get("" + c));
+        }
+    }
+
+    private boolean isHexadecimal(char c) {
+        return c >= '0' && c <= 'F';
+    }
+
+    private void scanHexadecimal() {
+        char firstHex = advance();
+        char secondHex = advance();
+        if (isHexadecimal(firstHex) && isHexadecimal(secondHex)) {
+            int value = Character.digit(firstHex, 16) * 16 + Character.digit(secondHex, 16);
+            addToken(Token.TokenType.NUMBER, value);
         }
     }
 
@@ -150,6 +169,12 @@ public class Scanner implements IScanner {
     }
 
     private char advance() {
+        if (peek() == '\n') {
+            line++;
+            column = 1;
+        } else {
+            column++;
+        }
         current++;
         return source.charAt(current - 1);
     }
@@ -160,14 +185,13 @@ public class Scanner implements IScanner {
 
     private void addToken(Token.TokenType type, Object literal) {
         String text = source.substring(start, current);
-        tokens.add(new Token(type, text, literal, new Position(line, column)));
+        tokens.add(new Token(type, text, literal, position));
     }
 
     private boolean match(char expected) {
         if (isAtEnd()) return false;
         if (source.charAt(current) != expected) return false;
-
-        current++;
+        advance();
         return true;
     }
 

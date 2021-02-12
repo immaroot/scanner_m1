@@ -18,9 +18,6 @@ public class Position {
 
     @Override
     public String toString() {
-        return "Position{" +
-                "lineNumber=" + lineNumber +
-                ", columnNumber=" + columnNumber +
-                '}';
+        return "line: " + lineNumber + ", column: " + columnNumber;
     }
 }

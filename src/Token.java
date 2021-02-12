@@ -6,7 +6,7 @@ public class Token implements IToken{
         GTR, PERIOD, COMMA, COLON, OP, QUERY, LPAREN, BECOMES, IDENT, IF,
         WHILE, REPEAT, INC, DEC, ROL, ROR, NUMBER, RPAREN, THEN, DO,
         SEMICOLON, END, ELSE, ELSIF, UNTIL, RETURN, INT, SET, BOOL,
-        CONST, BEGIN, PROCED, MODULE, EOF
+        CONST, BEGIN, PROCED, MODULE, EOF, HEX
 
     }
 
@@ -46,6 +46,6 @@ public class Token implements IToken{
     }
 
     public String toString() {
-        return type + " " + lexeme + " " + (literal != null ? literal : "") ;
+        return type + " " + lexeme + " " + (literal != null ? literal + " " : "") + position;
     }
 }
